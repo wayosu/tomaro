@@ -49,7 +49,6 @@ document.addEventListener('alpine:init', () => {
             // 4. Lanjutkan sisa inisialisasi seperti biasa
             this.totalSeconds = this.modes[this.currentMode] * 60;
             this.initialTime = this.totalSeconds;
-            this.requestNotificationPermission();
         },
 
         // Satu tombol untuk Start/Pause
@@ -57,6 +56,19 @@ document.addEventListener('alpine:init', () => {
             if (this.isRunning) {
                 this.pauseTimer();
             } else {
+                // --- FIX: Minta izin & aktifkan audio HANYA saat user memulai timer ---
+                // 1. Cek izin notifikasi. Jika 'default', minta izin.
+                //    Browser modern hanya izinkan ini jika dipicu oleh aksi user (klik).
+                if (Notification.permission === 'default') {
+                    this.requestNotificationPermission();
+                }
+
+                // 2. Coba putar dan langsung pause-kan suara.
+                //    Ini "membuka kunci" audio di banyak mobile browser.
+                const sound = document.getElementById('alarm-sound');
+                sound.play().catch(() => {}); // Abaikan error jika gagal
+                sound.pause();
+
                 this.startTimer();
             }
         },
