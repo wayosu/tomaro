@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tomaro</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <link href="css/style.css" rel="stylesheet">
+    
+    <script src="js/app.js" defer></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="text-white antialiased">
+
+    <div 
+        x-data="pomodoro" 
+        x-init="init()" 
+        x-effect="updateTitle()"
+        class="min-h-screen flex flex-col items-center justify-center p-4 relative bg-gray-900 bg-gradient-to-br to-gray-900 transition-all duration-1000"
+        :class="{
+            'from-red-900': currentMode === 'work',
+            'from-blue-900': currentMode === 'shortBreak',
+            'from-green-900': currentMode === 'longBreak'
+        }"
+    >
+        <button @click="showSettings = true" class="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        </button>
+
+        <div class="w-full max-w-md bg-gray-800 bg-opacity-80 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-2xl p-6 md:p-10">
+
+            <div class="flex justify-center space-x-2 md:space-x-4 mb-8">
+                <button 
+                    @click="switchMode('work')"
+                    :class="{ 'bg-red-600 text-white': currentMode === 'work', 'bg-gray-700 hover:bg-gray-600 text-gray-300': currentMode !== 'work' }"
+                    class="px-4 py-2 md:px-6 md:py-2 rounded-full font-semibold transition-colors duration-200 text-sm md:text-base">
+                    Fokus
+                </button>
+                <button 
+                    @click="switchMode('shortBreak')"
+                    :class="{ 'bg-blue-600 text-white': currentMode === 'shortBreak', 'bg-gray-700 hover:bg-gray-600 text-gray-300': currentMode !== 'shortBreak' }"
+                    class="px-4 py-2 md:px-6 md:py-2 rounded-full font-semibold transition-colors duration-200 text-sm md:text-base">
+                    Istirahat Pendek
+                </button>
+                <button 
+                    @click="switchMode('longBreak')"
+                    :class="{ 'bg-green-600 text-white': currentMode === 'longBreak', 'bg-gray-700 hover:bg-gray-600 text-gray-300': currentMode !== 'longBreak' }"
+                    class="px-4 py-2 md:px-6 md:py-2 rounded-full font-semibold transition-colors duration-200 text-sm md:text-base">
+                    Istirahat Panjang
+                </button>
+            </div>
+
+            <div class="my-10 relative flex justify-center items-center w-64 h-64 md:w-80 md:h-80 mx-auto">
+                <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle class="text-gray-700" stroke-width="8" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
+                </svg>
+                <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle 
+                        class="progress-ring__circle progress-glow"
+                        :class="{
+                            'text-red-500': currentMode === 'work',
+                            'text-blue-500': currentMode === 'shortBreak',
+                            'text-green-500': currentMode === 'longBreak'
+                        }"
+                        stroke-width="8"
+                        stroke-linecap="round"
+                        :stroke-dasharray="circumference"
+                        :stroke-dashoffset="progressOffset"
+                        stroke="currentColor" 
+                        fill="transparent" 
+                        r="45" cx="50" cy="50"
+                    />
+                </svg>
+                <div class="text-center z-10">
+                    <div class="text-6xl md:text-7xl font-extrabold tracking-tighter font-timer">
+                        <span x-text="format(displayMinutes())"></span>
+                        <span :class="{ 'timer-colon-pulse': isRunning }">:</span>
+                        <span x-text="format(displaySeconds())"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center space-x-6">
+                <button 
+                    @click="toggleTimer()"
+                    :class="{ 'bg-green-500 hover:bg-green-600': !isRunning, 'bg-yellow-500 hover:bg-yellow-600': isRunning }"
+                    class="text-white text-xl md:text-2xl font-bold px-10 py-4 rounded-lg shadow-lg transition-transform transform hover:scale-105 w-36">
+                    <span x-show="!isRunning">MULAI</span>
+                    <span x-show="isRunning" x-cloak>PAUSE</span>
+                </button>
+                <button 
+                    @click="resetTimer()"
+                    class="bg-red-500 hover:bg-red-600 text-white text-xl md:text-2xl font-bold px-10 py-4 rounded-lg shadow-lg transition-transform transform hover:scale-105 w-36">
+                    RESET
+                </button>
+            </div>
+
+            <div class="text-center mt-8 text-gray-400 text-lg">
+                Sesi Fokus Selesai: <span x-text="pomodoroCount" class="font-bold"></span>
+            </div>
+        </div>
+
+        <div 
+            x-show="showSettings"
+            x-transition:enter="ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+            x-cloak
+        >
+            <div @click="showSettings = false" class="absolute inset-0"></div>
+            <div @click.stop class="bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-sm z-10 relative">
+                <button @click="showSettings = false" class="absolute top-4 right-4 text-gray-500 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                <h2 class="text-2xl font-bold text-center mb-6">Pengaturan Durasi (menit)</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="work" class="block text-sm font-medium text-gray-300 mb-1">Fokus</label>
+                        <input type="number" id="work" x-model.number="modes.work" min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-red-500">
+                    </div>
+                    <div>
+                        <label for="shortBreak" class="block text-sm font-medium text-gray-300 mb-1">Istirahat Pendek</label>
+                        <input type="number" id="shortBreak" x-model.number="modes.shortBreak" min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="longBreak" class="block text-sm font-medium text-gray-300 mb-1">Istirahat Panjang</label>
+                        <input type="number" id="longBreak" x-model.number="modes.longBreak" min="1" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                </div>
+                <button @click="applySettings" class="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors">
+                    Terapkan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="alarm-sound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-positive-notification-951.mp3" type="audio/mpeg">
+    </audio>
+
+</body>
+</html>

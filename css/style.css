@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Roboto+Mono:wght@700&display=swap');
+
+body {
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Sembunyikan elemen saat Alpine dimuat */
+[x-cloak] { 
+    display: none !important; 
+}
+
+/* Style untuk SVG Progress Bar */
+.progress-ring__circle {
+    transition: stroke-dashoffset 0.3s linear;
+    transform: rotate(-90deg); /* Mulai dari atas */
+    transform-origin: 50% 50%;
+}
+
+.progress-glow {
+    /* filter: drop-shadow(x-offset y-offset blur-radius color); */
+    filter: drop-shadow(0 0 12px currentColor);
+    /* Sedikit blur tambahan untuk memperhalus glow */
+    -webkit-filter: drop-shadow(0 0 12px currentColor);
+}
+
+.font-timer {
+    font-family: 'Roboto Mono', monospace;
+}
+
+.timer-colon-pulse {
+    animation: throb 1.5s ease-in-out infinite;
+}
+
+@keyframes throb {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
